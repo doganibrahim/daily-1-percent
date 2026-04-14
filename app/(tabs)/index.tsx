@@ -1,31 +1,71 @@
-import { StyleSheet } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+import { Screen } from '@/components/ui/Screen';
+import { EmptyState } from '@/features/habits/components/EmptyState';
+import { HabitCard } from '@/features/habits/components/HabitCard';
+import { useHabitStore } from '@/store/habitStore';
 
-export default function TabOneScreen() {
+export default function HabitsScreen() {
+  const habits = useHabitStore((s) => s.habits);
+  const checkInHabit = useHabitStore((s) => s.checkInHabit);
+  const router = useRouter();
+
+  const handleAddHabit = () => {
+    router.push('/modal');
+  };
+
+  if (habits.length === 0) {
+    return (
+      <Screen>
+        <EmptyState onAddHabit={handleAddHabit} />
+      </Screen>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
+    <Screen>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View className="px-6 pt-4 pb-6">
+          <Text className="text-charcoal-400 text-xs uppercase tracking-widest mb-1">
+            Daily Progress
+          </Text>
+          <Text className="text-charcoal-900 text-3xl font-bold">
+            {habits.length} {habits.length === 1 ? 'habit' : 'habits'}
+          </Text>
+        </View>
+
+        {/* Habit cards */}
+        <View className="px-5">
+          {habits.map((habit) => (
+            <HabitCard
+              key={habit.id}
+              habit={habit}
+              onCheckIn={checkInHabit}
+            />
+          ))}
+        </View>
+
+        {/* Add habit FAB-style button at bottom */}
+        <View className="px-5 mt-4">
+          <Pressable
+            onPress={handleAddHabit}
+            className="border-2 border-dashed border-sand-300 rounded-2xl py-5 items-center flex-row justify-center"
+            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+          >
+            <FontAwesome name="plus" size={16} color="#A89778" />
+            <Text className="text-sand-600 text-base font-semibold ml-2">
+              Add Habit
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});
