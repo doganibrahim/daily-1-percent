@@ -18,12 +18,14 @@ interface HabitStoreState {
   hydrated: boolean;
   hydratedAt: number | null;
   error: string | null;
+  lastCheckInHabitId: string | null;
   hydrate: () => void;
   addHabit: (input: { name: string; icon?: string; color?: string }) => void;
   checkInHabit: (habitId: string, scenario?: HabitCheckInScenario) => void;
   resetError: () => void;
   removeHabit: (habitId: string) => void;
   getPredictionForHabit: (habitId: string) => HabitPrediction | null;
+  isCheckedInToday: (habitId: string) => boolean;
 }
 
 const DEFAULT_ICON = 'leaf';
@@ -51,6 +53,7 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
   hydrated: false,
   hydratedAt: null,
   error: null,
+  lastCheckInHabitId: null,
 
   hydrate: () => {
     const persisted = getPersistedHabitState();
@@ -131,6 +134,7 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
       habits: nextHabits,
       hydratedAt: nextHydratedAt,
       error: null,
+      lastCheckInHabitId: habitId,
     });
   },
 
@@ -148,6 +152,12 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
       hydratedAt: nextHydratedAt,
       error: null,
     });
+  },
+
+  isCheckedInToday: (habitId) => {
+    const habit = get().habits.find((item) => item.id === habitId);
+    if (!habit) return false;
+    return isSameDayKey(habit.lastCheckInDate, getDayKey());
   },
 
   getPredictionForHabit: (habitId) => {

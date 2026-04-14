@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -10,7 +11,16 @@ import { useHabitStore } from '@/store/habitStore';
 export default function HabitsScreen() {
   const habits = useHabitStore((s) => s.habits);
   const checkInHabit = useHabitStore((s) => s.checkInHabit);
+  const error = useHabitStore((s) => s.error);
+  const resetError = useHabitStore((s) => s.resetError);
   const router = useRouter();
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(resetError, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, resetError]);
 
   const handleAddHabit = () => {
     router.push('/modal');
@@ -26,6 +36,18 @@ export default function HabitsScreen() {
 
   return (
     <Screen>
+      {/* Error toast */}
+      {error && (
+        <Pressable
+          onPress={resetError}
+          className="bg-terracotta-500 mx-5 mt-2 rounded-xl px-4 py-3 flex-row items-center"
+        >
+          <FontAwesome name="exclamation-circle" size={16} color="#FFFFFF" />
+          <Text className="text-white text-sm ml-2 flex-1">{error}</Text>
+          <FontAwesome name="times" size={14} color="#FFFFFF" />
+        </Pressable>
+      )}
+
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 40 }}
@@ -52,7 +74,7 @@ export default function HabitsScreen() {
           ))}
         </View>
 
-        {/* Add habit FAB-style button at bottom */}
+        {/* Add habit button */}
         <View className="px-5 mt-4">
           <Pressable
             onPress={handleAddHabit}

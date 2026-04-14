@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
@@ -30,11 +31,26 @@ const getHabitColors = (color: string) => {
 export function HabitCard({ habit, onCheckIn }: HabitCardProps) {
   const todayKey = getDayKey();
   const checkedInToday = isSameDayKey(habit.lastCheckInDate, todayKey);
+  const [justCheckedIn, setJustCheckedIn] = useState(false);
 
   const tomorrowIfSuccess = predictTomorrowTarget(habit.currentValue, true);
   const tomorrowIfMiss = predictTomorrowTarget(habit.currentValue, false);
 
   const growthPercent = ((habit.currentValue - 1) * 100).toFixed(1);
+  const colors = getHabitColors(habit.color);
+
+  useEffect(() => {
+    if (justCheckedIn) {
+      const timer = setTimeout(() => setJustCheckedIn(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [justCheckedIn]);
+
+  const handleCheckIn = () => {
+    if (checkedInToday) return;
+    onCheckIn(habit.id);
+    setJustCheckedIn(true);
+  };
 
   return (
     <Card className="mb-4">
@@ -42,12 +58,12 @@ export function HabitCard({ habit, onCheckIn }: HabitCardProps) {
       <View className="flex-row items-center mb-5">
         <View
           className="rounded-2xl w-12 h-12 items-center justify-center mr-4"
-          style={{ backgroundColor: getHabitColors(habit.color).bg }}
+          style={{ backgroundColor: colors.bg }}
         >
           <FontAwesome
             name={(habit.icon as React.ComponentProps<typeof FontAwesome>['name']) || 'leaf'}
             size={20}
-            color={getHabitColors(habit.color).fg}
+            color={colors.fg}
           />
         </View>
 
@@ -113,15 +129,20 @@ export function HabitCard({ habit, onCheckIn }: HabitCardProps) {
 
       {/* Check-in action */}
       {checkedInToday ? (
-        <View className="bg-sage-100 rounded-2xl py-4 items-center flex-row justify-center">
-          <FontAwesome name="check-circle" size={20} color="#5E8A5D" />
-          <Text className="text-sage-700 text-base font-semibold ml-2">
-            Completed today
+        <View>
+          <View className="bg-sage-100 rounded-2xl py-4 items-center flex-row justify-center">
+            <FontAwesome name="check-circle" size={20} color="#5E8A5D" />
+            <Text className="text-sage-700 text-base font-semibold ml-2">
+              {justCheckedIn ? 'Great job! +1% earned' : 'Completed today'}
+            </Text>
+          </View>
+          <Text className="text-charcoal-300 text-[11px] text-center mt-2">
+            Next check-in available tomorrow
           </Text>
         </View>
       ) : (
         <Pressable
-          onPress={() => onCheckIn(habit.id)}
+          onPress={handleCheckIn}
           className="bg-terracotta-500 rounded-2xl py-4 items-center flex-row justify-center"
           style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
         >
