@@ -1,5 +1,3 @@
-import { createMMKV } from 'react-native-mmkv';
-
 import { Habit } from '@/types/habit';
 
 import { STORAGE_KEYS, STORAGE_SCHEMA_VERSION, StorageKey } from './storageKeys';
@@ -10,10 +8,50 @@ export interface PersistedHabitState {
   version: number;
 }
 
-// Main storage instance shared across repositories/store layers.
-export const storage = createMMKV({
-  id: 'daily1percent-storage',
-});
+interface StorageAdapter {
+  set: (key: string, value: string) => void;
+  getString: (key: string) => string | undefined;
+  remove: (key: string) => void;
+}
+
+const createMemoryStorage = (): StorageAdapter => {
+  const memory = new Map<string, string>();
+
+  return {
+    set: (key, value) => {
+      memory.set(key, value);
+    },
+    getString: (key) => {
+      return memory.get(key);
+    },
+    remove: (key) => {
+      memory.delete(key);
+    },
+  };
+};
+
+const createStorageAdapter = (): StorageAdapter => {
+  try {
+    // Lazily require MMKV to avoid crashing in Expo Go environments
+    // where NitroModules may not be available.
+    const mmkvModule = require('react-native-mmkv') as {
+      createMMKV?: (config?: { id?: string }) => StorageAdapter;
+    };
+
+    if (typeof mmkvModule.createMMKV === 'function') {
+      return mmkvModule.createMMKV({
+        id: 'daily1percent-storage',
+      });
+    }
+  } catch {
+    // Fall back to in-memory storage when MMKV native module is unavailable.
+  }
+
+  return createMemoryStorage();
+};
+
+// Shared storage adapter across repository/store layers.
+export const storage = createStorageAdapter();
 
 const safeParse = <T>(value: string, fallback: T): T => {
   try {
