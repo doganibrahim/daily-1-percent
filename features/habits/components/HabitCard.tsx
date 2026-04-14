@@ -16,6 +16,17 @@ const formatTarget = (value: number): string => {
   return value.toFixed(2);
 };
 
+const COLOR_MAP: Record<string, { bg: string; fg: string }> = {
+  'bg-sage-500': { bg: '#E5ECE5', fg: '#5E8A5D' },
+  'bg-terracotta-500': { bg: '#FAEADE', fg: '#C2714A' },
+  'bg-sand-500': { bg: '#F5EDE0', fg: '#A89778' },
+  'bg-charcoal-500': { bg: '#E8E8E8', fg: '#5C5C5C' },
+};
+
+const getHabitColors = (color: string) => {
+  return COLOR_MAP[color] ?? COLOR_MAP['bg-sage-500'];
+};
+
 export function HabitCard({ habit, onCheckIn }: HabitCardProps) {
   const todayKey = getDayKey();
   const checkedInToday = isSameDayKey(habit.lastCheckInDate, todayKey);
@@ -29,11 +40,14 @@ export function HabitCard({ habit, onCheckIn }: HabitCardProps) {
     <Card className="mb-4">
       {/* Top: icon + name + streak badge */}
       <View className="flex-row items-center mb-5">
-        <View className="bg-sage-100 rounded-2xl w-12 h-12 items-center justify-center mr-4">
+        <View
+          className="rounded-2xl w-12 h-12 items-center justify-center mr-4"
+          style={{ backgroundColor: getHabitColors(habit.color).bg }}
+        >
           <FontAwesome
             name={(habit.icon as React.ComponentProps<typeof FontAwesome>['name']) || 'leaf'}
             size={20}
-            color="#5E8A5D"
+            color={getHabitColors(habit.color).fg}
           />
         </View>
 
